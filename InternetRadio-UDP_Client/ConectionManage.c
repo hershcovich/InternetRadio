@@ -13,23 +13,42 @@ int Play_MultiCast_Stream(char *IP_ADDR , char* IP_Port){
 	struct ip_mreq mreq;
 	fd_set socks;
 	FD_ZERO(&socks);
+	memset((char*) &multiaddr,0,sizeof(multiaddr));
 	multiaddr.sin_family = AF_INET;
 	multiaddr.sin_port = htons(atoi(IP_Port));
-	multiaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	multiaddr.sin_addr.s_addr = INADDR_ANY;
 	if((sock = socket(AF_INET,SOCK_DGRAM,0)) < 0){
 		perror("failed to open socket");
 		exit(1);
 	}
-	bind(sock,(struct sockaddr *)&multiaddr,sizeof(multiaddr));
+	//else {
+		//puts("Open Socket V");
+	//}
+
+	if(bind(sock,(struct sockaddr *)&multiaddr,sizeof(multiaddr))){
+		perror("Bind problem");
+		close(sock);
+		exit(EXIT_FAILURE);
+	}
+	//else {
+		//	puts("Bind V");
+	//	}
 
 	mreq.imr_multiaddr.s_addr = inet_addr(IP_ADDR);
-	mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-	setsockopt(sock,IPPROTO_IP,IP_ADD_MEMBERSHIP,&mreq,sizeof(mreq));
+	mreq.imr_interface.s_addr = INADDR_ANY;
+	if(setsockopt(sock,IPPROTO_IP,IP_ADD_MEMBERSHIP,&mreq,sizeof(mreq)) <0){
+		perror("failed to SetSockopt multicast");
+		close(sock);
+		exit(EXIT_FAILURE);
+	}
+	//else{
+	//	puts("multicast V");
+//	}
 	FD_SET(sock,&socks);
 	FD_SET(0,&socks);
-	//inet_pton(AF_INET,IP_ADDR,&multiaddr.sin_addr);
+
 	while(1){
-		select_toread = select(sock +1, &socks,NULL,NULL,NULL); //wait for input from stdin or netwirk
+		select_toread = select(sock +1, &socks,NULL,NULL,NULL); //wait for input from stdin or network
 		if(select_toread < 0){
 			perror("there was problem in select function");
 			exit(EXIT_FAILURE);
@@ -41,6 +60,9 @@ int Play_MultiCast_Stream(char *IP_ADDR , char* IP_Port){
 				exit(EXIT_SUCCESS);
 			}
 		}
+	}
+	while(1){
+		handle_multicast_recive(sock ,&multiaddr);
 	}
 	return 0;
 }
@@ -78,7 +100,9 @@ int handle_multicast_recive(int sock ,struct sockaddr_in* addr)
 	char databuf[1024];
 	int datalen = sizeof(databuf);
 	int addrlen = sizeof(*addr);
-	recvfrom(sock,databuf,datalen,0,addr,&addrlen);
-	puts(databuf);
+	int countbytes;
+	countbytes = recvfrom(sock,databuf,datalen,0,addr,&addrlen);
+	if (countbytes <= 0) return 0;
+	write(STDOUT_FILENO,databuf,countbytes);
 	return 0;
 }

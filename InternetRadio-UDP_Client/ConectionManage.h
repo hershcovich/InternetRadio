@@ -14,7 +14,11 @@
 #include <ctype.h>
 #include <sys/time.h>
 #include <fcntl.h>
-
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <fcntl.h> // for open
+#include <unistd.h> // for close
+#include <string.h>
 
 int Play_MultiCast_Stream(char *IP_ADDR , char* IP_Port);
 int read_socks(int  sock, fd_set *socks ,struct sockaddr_in* addr);
