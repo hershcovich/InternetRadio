@@ -17,14 +17,9 @@ int main(int argc, char *argv[]){
 		puts("Incorrect number of arguments!\nExiting...\n");
 		return -1;
 	}
-	Play_MultiCast_Stream(argv[1],argv[2]);
-
-
-
-
-
-
+	Play_MultiCast_Stream(argv[1],argv[2]); //do what you have to do and play the multicast radio ;)
 	return 0;
 }
+
 
 

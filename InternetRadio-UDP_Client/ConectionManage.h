@@ -25,3 +25,4 @@ int read_socks(int  sock, fd_set *socks ,struct sockaddr_in* addr);
 int handle_user_input();
 int handle_multicast_recive(int sock ,struct sockaddr_in* addr);
 #endif /* CONECTIONMANAGE_H_ */
+
