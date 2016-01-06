@@ -20,6 +20,8 @@
 #include <unistd.h> // for close
 #include <string.h>
 
+volatile int sock_for_sigint;
+FILE* play;
 int Play_MultiCast_Stream(char *IP_ADDR , char* IP_Port);
 int read_socks(int  sock, fd_set *socks ,struct sockaddr_in* addr);
 int handle_user_input();

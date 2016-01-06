@@ -1,0 +1,1 @@
+ConectionManage.d: ../ConectionManage.c
