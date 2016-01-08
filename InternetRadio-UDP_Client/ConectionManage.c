@@ -17,7 +17,7 @@
 int Play_MultiCast_Stream(char *IP_ADDR , char* IP_Port)
 {
 	int sock;
-	char databuf[1024]; //bufer for geting the stream
+	char databuf[2048]; //bufer for geting the stream
 	int datalen = sizeof(databuf); //the size of the buffer
 	int addrlen; //the length of the sockaddr_in
 	int countbytes; //counter for received bytes
@@ -55,19 +55,26 @@ int Play_MultiCast_Stream(char *IP_ADDR , char* IP_Port)
 		if(play)pclose(play);
 		exit(EXIT_FAILURE);
 	}
-	/* fill the FD set with stdin and sock*/
-	FD_SET(sock,&socks);
-	FD_SET(0,&socks);
 	/*the main loop to receive data*/
 	if(play){ // if the play application installed
 		while(1){
-				countbytes = recvfrom(sock,databuf,datalen,0,(struct sockaddr *)&multiaddr,(socklen_t *)&addrlen); //recive bytes from the stream to databuf buffer
+			if((countbytes = recvfrom(sock,databuf,datalen,0,(struct sockaddr *)&multiaddr,(socklen_t *)&addrlen)) == -1){
+								perror("Bind problem");
+								close(sock);
+								if(play)pclose(play);
+								exit(EXIT_FAILURE);
+							}
 				fwrite(databuf,sizeof(databuf[0]),countbytes,play); //print the stream to play program
 			}
 	}
 	else{ //if play application not installed or -p flag exist
 		while(1){
-				countbytes = recvfrom(sock,databuf,datalen,0,(struct sockaddr *)&multiaddr,(socklen_t *)&addrlen); //recive bytes from the stream to databuf buffer
+				if((countbytes = recvfrom(sock,databuf,datalen,0,(struct sockaddr *)&multiaddr,(socklen_t *)&addrlen)) == -1){
+					perror("Bind problem");
+					close(sock);
+					if(play)pclose(play);
+					exit(EXIT_FAILURE);
+				}
 				write(STDOUT_FILENO,databuf,countbytes); //print the stream to stdout
 			}
 	}
