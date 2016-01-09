@@ -13,7 +13,7 @@
 typedef struct RadioCommand{
 	uint8_t commandType;
 	uint16_t stationNumber;
-};
+} RadioCommand;
 
 
 #endif /* MESSAGETYPES_H_ */
