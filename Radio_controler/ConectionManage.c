@@ -64,25 +64,48 @@ int send_ask_song(uint16_t channel){
 
 int recive_msg(){
 	const int bufSiz = 1024;
-	int numBytes, numStations,multicastGroup, portNum;
-	char buf[bufSiz];
+	int numBytes;
+	uint16_t numStations, portNum;
+	char buf[bufSiz],stringToPrint[256];
+	struct in_addr multicastGroup;
 
 	if ((numBytes=recv(sock,buf,bufSiz,0))<0){
 		perror("error receiving message");
 		close(sock);
 		exit(EXIT_FAILURE);
 	}//if
-
 	if (numBytes==0) return 0;
 	if (status==HELLO)
-		if	(buf[0]==0)
-			status=CONNECTED;
-
+		if	(buf[0]==0 && numBytes==9){
+			memcpy(&numStations,buf+1,2);
+			numStations=ntohs(numStations);
+			memcpy(&multicastGroup,buf+3,4);
+			memcpy(&portNum,buf+7,2);
+			portNum=ntohs(portNum);
+			printf("MC group is: " ,inet_ntoa(multicastGroup));
+			printf("There are %d stations",numStations);
+			printf("The m.c port to listen to is %d",portNum);
+		}// if buf
 		else {
 			perror("error incorrect replay type message");
 			close(sock);
 			exit(EXIT_FAILURE);
 		}//if buf[0]==0
+	else{
+		if(buf[0]==1 && numBytes==2+buf[0]){//check if the songnameSize is correct
+			memcpy(&stringToPrint,buf+1,buf[1]);
+			stringToPrint[buf[1]]=0;//add sign end of string
+			printf("Now Playing: %s",stringToPrint);
+		}
+		if (buf[1]==2){
+			memcpy(&stringToPrint,buf+1,buf[1]);
+			stringToPrint[buf[1]]=0;//add sign end of string
+			printf("INVALID_COMMAND_REPLY: %s",stringToPrint);
+			perror("error incorrect replay type message");
+			close(sock);
+			exit(EXIT_FAILURE);
+		}
+	}
 	return 1;
 
 }//recive_msg
