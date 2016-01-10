@@ -126,13 +126,48 @@ int state_machine(char* IP,char* Port){
 					if((result = recive_msg()) < 0){
 						status = DISCONNECT;
 					}
+					else
+						status = CONNECTED;
 				}
 			}
 			break;
 		}
 		case CONNECTED:
 		{
-
+			if((select_answer = select(sock+1,&socks,NULL,NULL,NULL)) < 0){
+				perror("select");
+				close(sock);
+				exit(EXIT_FAILURE);
+			}
+			else{
+				if (FD_ISET(0,&socks)){
+					result = handle_user_input();
+					if(result == -1){
+						status = DISCONNECT;
+					}
+					else if (result >= 0){
+						send_ask_song(result);
+						timeout.tv_usec = TIMEOUT;
+						if((select_answer = select(sock+1,&socks,NULL,NULL,&timeout)) < 0){
+							perror("select");
+							close(sock);
+							exit(EXIT_FAILURE);
+						}
+						else if (select_answer ==0){
+							printf("Timeout while waiting for the server welcome message");
+							printf("Exiting...");
+						}
+						else{
+							////////////////////////////////////////////////////////////////////
+						}
+					}
+				}
+				if(FD_ISET(sock,&socks)){
+					if((result = recive_msg()) < 0){
+						status = DISCONNECT;
+					}
+				}
+				break;
 		}
 		case FAIL:
 		{
@@ -140,7 +175,8 @@ int state_machine(char* IP,char* Port){
 		}
 		case DISCONNECT:
 		{
-
+			close(sock);
+			exit(EXIT_SUCCESS);
 		}
 	}
 }
