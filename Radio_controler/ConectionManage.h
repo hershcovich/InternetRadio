@@ -28,7 +28,7 @@
 
 int open_tcp_concection(char* IP,char* Port);
 int open_radio_sc_conection();
-int send_ask_song(int socket,int channel);
+int send_ask_song(uint16_t channel);
 int print_invalid_command(char* to_print);
 int print_Announce(char* to_print);
 int state_machine(char* IP,char* Port);
@@ -36,7 +36,7 @@ int handle_user_input();
 int recive_msg();
 int sock;
 int number_of_stations;
-typedef enum state {CONNECT,HELLO,CONNECTED,FAIL,DISCONNECT} state ;
+typedef enum state {CONNECT,HELLO,CONNECTED,DISCONNECT} state ;
 
 state status;
 
