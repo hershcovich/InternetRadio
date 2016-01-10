@@ -64,18 +64,47 @@ int send_ask_song(uint16_t channel){
 
 
 int state_machine(char* IP,char* Port){
-	FD_SET
+	fd_set socks;
+	int select_answer;
+	int result;
+	struct timeval timeout;
 	switch(status){
 		case CONNECT:
 		{
+			FD_ZERO(&readset);
 			open_tcp_concection(IP,Port);
+			FD_SET(sock, &socks);
+			FD_SET(0,&socks);
 			status = HELLO;
 			break;
 		}
 		case HELLO:
 		{
 			int open_radio_sc_conection();
-
+			timeout.tv_usec = TIMEOUT;
+			if((select_answer = select(sock+1,&socks,NULL,NULL,&timeout)) < 0){
+				perror("select");
+				close(sock);
+				exit(EXIT_FAILURE);
+			}
+			else if (select_answer ==0){
+				printf("Timeout while waiting for the server welcome message");
+				printf("Exiting...");
+			}
+			else{
+				if (FD_ISET(0,&socks)){
+					result = handle_user_input();
+					if(result == 0){
+						status = DISCONNECT;
+					}
+				}
+				if(FD_ISET(sock,&socks)){
+					if((result = recive_msg()) < 0){
+						status = DISCONNECT;
+					}
+				}
+			}
+			break;
 		}
 		case CONNECTED:
 		{
