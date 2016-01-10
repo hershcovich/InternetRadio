@@ -62,6 +62,30 @@ int send_ask_song(uint16_t channel){
 	return 0;
 }
 
+int recive_msg(){
+	const int bufSiz = 1024;
+	int numBytes, numStations,multicastGroup, portNum;
+	char buf[bufSiz];
+
+	if ((numBytes=recv(sock,buf,bufSiz,0))<0){
+		perror("error receiving message");
+		close(sock);
+		exit(EXIT_FAILURE);
+	}//if
+
+	if (numBytes==0) return 0;
+	if (status==HELLO)
+		if	(buf[0]==0)
+			status=CONNECTED;
+
+		else {
+			perror("error incorrect replay type message");
+			close(sock);
+			exit(EXIT_FAILURE);
+		}//if buf[0]==0
+	return 1;
+
+}//recive_msg
 
 int state_machine(char* IP,char* Port){
 	fd_set socks;
