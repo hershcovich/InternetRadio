@@ -66,6 +66,7 @@ int send_ask_song(uint16_t channel){
 int state_machine(char* IP,char* Port){
 	fd_set socks;
 	int select_answer;
+	int result;
 	struct timeval timeout;
 	switch(status){
 		case CONNECT:
@@ -92,10 +93,18 @@ int state_machine(char* IP,char* Port){
 			}
 			else{
 				if (FD_ISET(0,&socks)){
-					;
+					result = handle_user_input();
+					if(result == 0){
+						status = DISCONNECT;
+					}
+				}
+				if(FD_ISET(sock,&socks)){
+					if((result = recive_msg()) < 0){
+						status = DISCONNECT;
+					}
 				}
 			}
-
+			break;
 		}
 		case CONNECTED:
 		{
