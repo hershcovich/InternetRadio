@@ -85,24 +85,30 @@ int send_ask_song(uint16_t channel){
  */
 int handle_user_input(){
 	int user_request = -2;
-	char input[6];
+	int c;
+	char input[8];
 	if(!fgets(input,sizeof(input),stdin)){
 		perror("error receiving user input");
 	}
-	//while((cleaning = getchar()) != '\n' && cleaning != '\0');
+	if((input[strlen(input)-1]) != '\n'){
+		while((c = getchar()) != '\n' && c != '\0');
+	}
 	if(strcmp(input,"q\n") == 0){
-		user_request = -1;
+		return -1;
 	}
 
 	else if(strcmp(input,"\n") ==0){
 		user_request =-2;
 	}
+	else if(input[0] < 48 || input[0] > 57){
+		user_request =-2;
+	}
 	else{
 		user_request= atoi(input);
-	//	if(user_request <0 || user_request >= number_of_stations){
-		//	printf("Please select a channel between 0 to %d",(number_of_stations - 1));
-		//	user_request = -2;
-	//	}
+	}
+	if(user_request <0 || user_request >= MAX_NUM_OF_STAITONS){
+		printf("Please select a channel between 0 to %d or press q to exit\n",MAX_NUM_OF_STAITONS -1);
+		user_request = -2;
 	}
 	return user_request;
 }
@@ -137,6 +143,13 @@ int recive_msg(){
 			printf("The m.c port to listen to is %d\n",portNum);
 			number_of_stations =numStations;
 		}// if buf
+		else if (buf[0]==2){
+			memcpy(&stringToPrint,buf+2,buf[1]);
+			stringToPrint[(int)buf[1]]=0;//add sign end of string
+			printf("INVALID_COMMAND_REPLY: %s\nExiting..\n",stringToPrint);
+			close(sock);
+			exit(EXIT_FAILURE);
+		}
 		else {
 			perror("error incorrect replay type message");
 			close(sock);
@@ -152,11 +165,12 @@ int recive_msg(){
 		else if (buf[0]==2){
 			memcpy(&stringToPrint,buf+2,buf[1]);
 			stringToPrint[(int)buf[1]]=0;//add sign end of string
-			printf("INVALID_COMMAND_REPLY: %s\n",stringToPrint);
-			perror("error incorrect replay type message");
+			printf("INVALID_COMMAND_REPLY: %s\nExiting..\n",stringToPrint);
 			close(sock);
 			exit(EXIT_FAILURE);
 		}
+		else
+			return -1;
 	}
 	return 1;
 
@@ -194,6 +208,7 @@ int state_machine(char* IP,char* Port){
 			{
 				open_radio_sc_conection(); //send and hello msg
 				timeout.tv_sec = TIMEOUT; //set the time out
+				timeout.tv_usec = 0;
 				select_answer = select(sock+1,&socks,NULL,NULL,&timeout);
 				if(select_answer < 0){ //sleep on select and in case of failure:
 					perror("select");
@@ -265,6 +280,7 @@ int state_machine(char* IP,char* Port){
 			{
 				send_ask_song(result);
 				timeout.tv_sec = TIMEOUT; //wait for answer from the server
+				timeout.tv_usec = 0;
 				FD_ZERO(&socks);
 				FD_SET(sock, &socks);
 				FD_SET(0,&socks);

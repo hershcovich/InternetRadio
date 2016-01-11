@@ -24,4 +24,4 @@
 	$(CC) $(CFLAGS) -o $(TARGET3) $(TARGET4).c $(TARGET5).c
 
   clean:
-	$(RM) $(TARGET)
+	$(RM) $(TARGET) $(TARGET3)

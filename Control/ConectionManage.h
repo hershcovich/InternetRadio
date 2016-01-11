@@ -24,7 +24,8 @@
 #include "MessageTypes.h"
 
 
-#define TIMEOUT 5 /*timeout in milisecond*/
+#define TIMEOUT 1 /*timeout in seconds*/
+#define MAX_NUM_OF_STAITONS 65536
 
 int open_tcp_concection(char* IP,char* Port);
 int open_radio_sc_conection();
