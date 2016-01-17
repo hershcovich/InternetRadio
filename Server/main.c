@@ -6,7 +6,7 @@
  */
 #include "GlobalStructs.h"
 #include "TCPConectionManage.h"
-#include "UDPConectionManage.h"
+#include "UDPConectiondManage.h"
 
 Station* list_of_stations;
 int number_of_stations;
