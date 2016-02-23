@@ -6,25 +6,33 @@
  */
 #include "GlobalStructs.h"
 #include "TCPConectionManage.h"
-#include "UDPConectiondManage.h"
+#include "UDPConectionManage.h"
+#include <netinet/in.h>
 
 Station* list_of_stations;
 int number_of_stations;
 int Multicast_Port;
-int TCP_Port;
+uint16_t TCP_Port;
+struct in_addr multicast_address;
 
-int terminate();
-int print_data();
+
+
+//int terminate();
+//int print_data();
 int handle_user_input();
 
 int main(int argc,char** argv){
-	pthread_t UDP_Default_Thread,TCP_Default_Thread;
+	pthread_t UDP_Default_Thread,TCP_Default_Thread; //threads for tcp and udp severs
 	int i,user_input;
-	if(argc < 4){
+	if(argc < 4){ //check for reciving arguments
 		puts("usage: radio_server <TCP PORT> <MLTICAST ADDRESS> <MULTICAST PORT> (<FILE1>) (<FILE2>) ...\n");
 		return 0;
 	}
-	number_of_stations = argc - 4;
+	TCP_Port = atoi(argv[1]); //save the recived TCP server port
+	Multicast_Port = atoi(argv[3]); //save the recived multicast Port
+	inet_aton(argv[2],&multicast_address); //save the recived multicast ip address
+	number_of_stations = argc - 4; //calculate the number of stations
+	/* Creating UDP stations*/
 	if (number_of_stations > 0){
 		list_of_stations = (Station*)malloc(sizeof(Station)*number_of_stations);
 		for(i = 4 ; i < argc ;i++){
@@ -40,11 +48,11 @@ int main(int argc,char** argv){
 	//init tcp server
 	pthread_create(&TCP_Default_Thread,NULL,tcp_radio_welcome,list_of_stations);
 	while(1){
-		if((user_input = handle_user_input()) == -1){
-			terminate();
-		}
-		else if(user_input == 1)
-			print_data();
+		//if((user_input = handle_user_input()) == -1){
+		//	terminate();
+	//	}
+		//else if(user_input == 1)
+		//	print_data();
 	}
 }
 

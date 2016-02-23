@@ -6,12 +6,9 @@
  */
 #include "UDPConectionManage.h"
 
-//Structure of arguments to pass to the thread
-struct ThreadArg{
-	int stationNum;
-};
 
-void* newStationTread (void* arg);
+
+
 
 
 
@@ -38,7 +35,7 @@ void * udp_init_channels(void* arg){
 	while (1){
 
 	}//Run forever
-
+	return 0;
 }//udp_init_channels
 
 
@@ -57,7 +54,7 @@ void* newStationTread (void* arg){
 	struct sockaddr_in multiaddr; // struct to open the socket
 	memset((char*) &multiaddr,0,sizeof(multiaddr));
 	multiaddr.sin_family = AF_INET;
-	multiaddr.sin_port = htons(atoi(Multicast_Port));
+	multiaddr.sin_port = htons(Multicast_Port);
 	multiaddr.sin_addr.s_addr = htonl(list_of_stations[stationNum].multicast_address);
 
 	//try to create new socket
@@ -66,7 +63,7 @@ void* newStationTread (void* arg){
 			exit(EXIT_FAILURE);
 	} //if(sock ..
 	/*Set TTL of multicast packet */
-	u_char mcTTL = 3;
+	u_char mcTTL = 64;
 	if(setsockopt(sock,IPPROTO_IP,IP_MULTICAST_TTL,&mcTTL,sizeof(mcTTL)) <0){ //in case of failure...
 		perror("failed to SetSockopt multicast");
 		close(sock);
@@ -109,7 +106,7 @@ void* newStationTread (void* arg){
 			gettimeofday(&end, NULL);
 			elapsed = (end.tv_sec-start.tv_sec)*1000000 + end.tv_usec-start.tv_usec;
 			wait.tv_sec=0;
-			wait.tv_nsec=interval_nanoSec-elapsed;
+			wait.tv_nsec=interval_nanoSec-elapsed*1000;
 			nanosleep(&wait,NULL);
 		}//while transmitting the song
 
@@ -121,6 +118,7 @@ void* newStationTread (void* arg){
 		//update the next song as current playing song
 		list_of_stations[stationNum].current_playing_song=list_of_stations[stationNum].current_playing_song->nextsong;
 
-	}while (1);
-
+	}
+	while (1);
+	return 0;
 }

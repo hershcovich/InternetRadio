@@ -7,6 +7,7 @@
 
 #ifndef GLOBALSTRUCTS_H_
 #define GLOBALSTRUCTS_H_
+#include "stdio.h"
 
 typedef struct songlist{
 	char * song_filename;

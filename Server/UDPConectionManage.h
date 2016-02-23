@@ -25,7 +25,15 @@
 extern Station* list_of_stations;
 extern int number_of_stations;
 extern int Multicast_Port;
-extern int TCP_Port;
+extern uint16_t TCP_Port;
+extern struct in_addr multicast_address;
+
+//Structure of arguments to pass to the thread
+struct ThreadArg{
+	int stationNum;
+};
+
+void* newStationTread (void* arg);
 
 void *udp_init_channels(void* arg);
 

@@ -30,7 +30,8 @@
 extern Station* list_of_stations;
 extern int number_of_stations;
 extern int Multicast_Port;
-extern int TCP_Port;
+extern uint16_t TCP_Port;
+extern struct in_addr multicast_address;
 
 typedef struct socketnode{
 	int sock;
@@ -43,7 +44,7 @@ socketnode* socketlist;
 
 void* tcp_radio_welcome(void* arg);
 void *tcp_radio_conection(void* arg);
-char* what_song_is_played(int Station);
+char* what_song_is_played(uint16_t Station);
 int hello_handshake(socketnode *sonode);
 int close_socket_node(socketnode *sonode);
 int server_client_interaction(socketnode *sonode);
