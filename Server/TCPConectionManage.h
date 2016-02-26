@@ -21,6 +21,7 @@
 #include <unistd.h> // for close
 #include <string.h>
 #include <pthread.h>
+#include <signal.h>
 #include "GlobalStructs.h"
 #include "MessageTypes.h"
 
@@ -32,6 +33,7 @@ extern int number_of_stations;
 extern int Multicast_Port;
 extern uint16_t TCP_Port;
 extern struct in_addr multicast_address;
+extern pthread_t UDP_Default_Thread,TCP_Default_Thread;
 
 typedef struct socketnode{
 	int sock;
@@ -41,6 +43,8 @@ typedef struct socketnode{
 }socketnode;
 
 socketnode* socketlist;
+socketnode* welcomesocket; // a node to for the default welcome socket
+socketnode* tmpsocket; //a socket for new conections
 
 void* tcp_radio_welcome(void* arg);
 void *tcp_radio_conection(void* arg);
@@ -48,6 +52,8 @@ char* what_song_is_played(uint16_t Station);
 int hello_handshake(socketnode *sonode);
 int close_socket_node(socketnode *sonode);
 int server_client_interaction(socketnode *sonode);
+int close_TCP_server();
+int print_TCP_data();
 
 
 #endif /* TCPCONECTIONMANAGE_H_ */

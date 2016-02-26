@@ -27,6 +27,7 @@ extern int number_of_stations;
 extern int Multicast_Port;
 extern uint16_t TCP_Port;
 extern struct in_addr multicast_address;
+extern pthread_t UDP_Default_Thread,TCP_Default_Thread;
 
 //Structure of arguments to pass to the thread
 struct ThreadArg{
@@ -36,5 +37,7 @@ struct ThreadArg{
 void* newStationTread (void* arg);
 
 void *udp_init_channels(void* arg);
+int close_udp_server();
+int print_UDP_data();
 
 #endif /* UDPCONECTIONMANAGE_H_ */

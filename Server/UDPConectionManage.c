@@ -14,7 +14,6 @@
 
 void * udp_init_channels(void* arg){
 	Station* stationList = (Station*)arg;
-	pthread_t thread_arr[number_of_stations];
 	int i,s;
 	//open new threads as the number of stations
 	for (i=0; i<number_of_stations; i++){
@@ -24,7 +23,7 @@ void * udp_init_channels(void* arg){
 			exit(EXIT_FAILURE);
 		}
 		t_Arg->stationNum=i;
-		s=pthread_create(thread_arr[i],NULL,newStationTread,t_Arg);
+		s=pthread_create(&(stationList[i].ptr),NULL,newStationTread,t_Arg);
 		if (s!=0){
 			perror("pthread_create() error");
 			exit(EXIT_FAILURE);
@@ -55,7 +54,7 @@ void* newStationTread (void* arg){
 	memset((char*) &multiaddr,0,sizeof(multiaddr));
 	multiaddr.sin_family = AF_INET;
 	multiaddr.sin_port = htons(Multicast_Port);
-	multiaddr.sin_addr.s_addr = htonl(list_of_stations[stationNum].multicast_address);
+	multiaddr.sin_addr.s_addr = (list_of_stations[stationNum].multicast_address.sin_addr.s_addr);
 
 	//try to create new socket
 	if((sock = socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP)) < 0){ //In case of failure...
@@ -71,7 +70,7 @@ void* newStationTread (void* arg){
 	}
 
 	list_of_stations[stationNum].socket_number=sock;
-	//try to open the song
+
 
 	int numOfBytes=1400;
 	int byteRead;
@@ -86,6 +85,7 @@ void* newStationTread (void* arg){
 	list_of_stations[stationNum].current_playing_song=list_of_stations[stationNum].list_of_songs;
 
 	do{
+		//try to open the song
 		if(!(currentSong=fopen(list_of_stations[stationNum].current_playing_song->song_filename,"r"))){
 			perror("Can't open the file");
 			close(sock);
@@ -93,9 +93,9 @@ void* newStationTread (void* arg){
 		}
 		list_of_stations[stationNum].list_of_songs->songfile=currentSong;
 
-		while (currentSong!=EOF){
+		while ((byteRead=fread(buff,1,numOfBytes,currentSong)) != 0){
 			gettimeofday(&start, NULL);
-			byteRead=fread(buff,1,numOfBytes,currentSong);
+
 			ssize_t numBytes=sendto(sock,buff,byteRead,0,(struct sockaddr *)&multiaddr,sizeof(multiaddr));
 			if (numBytes==-1){
 				perror("sendto() ERROR");
@@ -110,15 +110,44 @@ void* newStationTread (void* arg){
 			nanosleep(&wait,NULL);
 		}//while transmitting the song
 
-		if (!fclose(currentSong)){
+		if (fclose(currentSong) == EOF){
 			perror("Can't close the file");
 			close(sock);
 			exit(EXIT_FAILURE);
 		}
 		//update the next song as current playing song
-		list_of_stations[stationNum].current_playing_song=list_of_stations[stationNum].current_playing_song->nextsong;
+		if(list_of_stations[stationNum].current_playing_song->nextsong)
+			list_of_stations[stationNum].current_playing_song=list_of_stations[stationNum].current_playing_song->nextsong;
+		else
+			list_of_stations[stationNum].current_playing_song =list_of_stations[stationNum].list_of_songs;
 
+	}while (1);
+
+	return 0;
+}
+
+int close_udp_server(){
+	int i;
+	songlist* temp;
+	for(i = 0 ; i<number_of_stations ; i++){
+		pthread_cancel(list_of_stations[i].ptr);
+		close(list_of_stations[i].socket_number);
+		while(list_of_stations[i].list_of_songs){
+			temp = list_of_stations[i].list_of_songs;
+			list_of_stations[i].list_of_songs = list_of_stations[i].list_of_songs->nextsong;
+			free(temp);
+		}
 	}
-	while (1);
+	free(list_of_stations);
+	pthread_cancel(UDP_Default_Thread);
+	return 0;
+}
+
+int print_UDP_data(){
+	int i;
+	printf(ANSI_COLOR_GREEN "List of Stations:\n" ANSI_COLOR_RESET);
+	for(i = 0 ; i <  number_of_stations ; i++){
+		printf("Channel %d:\nMulticast address: %s\nCurrent Playing Song:%s\n",i,inet_ntoa(list_of_stations[i].multicast_address.sin_addr),list_of_stations[i].current_playing_song->song_filename);
+	}
 	return 0;
 }

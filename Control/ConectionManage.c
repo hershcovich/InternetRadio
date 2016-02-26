@@ -292,6 +292,8 @@ int state_machine(char* IP,char* Port){
 				else if (select_answer ==0){ //in case of timeout
 					printf("Timeout while waiting for the server announce message\n");
 					printf("Exiting...\n");
+					close(sock);
+					exit(EXIT_FAILURE);
 				}//else if(select_answer..
 				else{
 					if (FD_ISSET(0,&socks)){ //if there's a user input while waiting
