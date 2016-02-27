@@ -151,7 +151,7 @@ int recive_msg(){
 			exit(EXIT_FAILURE);
 		}
 		else {
-			perror("error incorrect replay type message");
+			printf("error incorrect replay type message");
 			close(sock);
 			exit(EXIT_FAILURE);
 		}//else

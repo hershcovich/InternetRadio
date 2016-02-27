@@ -31,17 +31,15 @@ void * udp_init_channels(void* arg){
 
 	}//for
 
-	while (1){
-
-	}//Run forever
+//	while (1){
+//
+//	}//Run forever
 	return 0;
 }//udp_init_channels
 
 
 
 void* newStationTread (void* arg){
-	//Guarantees that thread resources are deallocated upon return
-	pthread_detach(pthread_self());
 	//Extract the station num from arg
 	int stationNum=((struct ThreadArg*)arg)->stationNum;
 	free(arg);
@@ -72,15 +70,15 @@ void* newStationTread (void* arg){
 	list_of_stations[stationNum].socket_number=sock;
 
 
-	int numOfBytes=1400;
+	int numOfBytes=1024;
 	int byteRead;
 	char buff[2000];
 
 	//for measure time between each transmit
 	long elapsed;
 	struct timeval start, end;
-	struct timespec wait;
-	long interval_nanoSec=87500000;
+	struct timeval wait;
+	long interval_uSec=62500;
 	//Define the head of the list of songs as the current playing
 	list_of_stations[stationNum].current_playing_song=list_of_stations[stationNum].list_of_songs;
 
@@ -106,8 +104,8 @@ void* newStationTread (void* arg){
 			gettimeofday(&end, NULL);
 			elapsed = (end.tv_sec-start.tv_sec)*1000000 + end.tv_usec-start.tv_usec;
 			wait.tv_sec=0;
-			wait.tv_nsec=interval_nanoSec-elapsed*1000;
-			nanosleep(&wait,NULL);
+			wait.tv_usec=interval_uSec-elapsed;
+			usleep(wait.tv_usec);
 		}//while transmitting the song
 
 		if (fclose(currentSong) == EOF){
@@ -131,7 +129,9 @@ int close_udp_server(){
 	songlist* temp;
 	for(i = 0 ; i<number_of_stations ; i++){
 		pthread_cancel(list_of_stations[i].ptr);
+		pthread_join(list_of_stations[i].ptr,NULL);
 		close(list_of_stations[i].socket_number);
+		fclose(list_of_stations[i].current_playing_song->songfile);
 		while(list_of_stations[i].list_of_songs){
 			temp = list_of_stations[i].list_of_songs;
 			list_of_stations[i].list_of_songs = list_of_stations[i].list_of_songs->nextsong;
@@ -140,6 +140,7 @@ int close_udp_server(){
 	}
 	free(list_of_stations);
 	pthread_cancel(UDP_Default_Thread);
+	pthread_join(UDP_Default_Thread,NULL);
 	return 0;
 }
 
@@ -147,7 +148,7 @@ int print_UDP_data(){
 	int i;
 	printf(ANSI_COLOR_GREEN "List of Stations:\n" ANSI_COLOR_RESET);
 	for(i = 0 ; i <  number_of_stations ; i++){
-		printf("Channel %d:\nMulticast address: %s\nCurrent Playing Song:%s\n",i,inet_ntoa(list_of_stations[i].multicast_address.sin_addr),list_of_stations[i].current_playing_song->song_filename);
+		printf("Channel %d:\nMulticast address: %s\nAt Port: %d\nCurrent Playing Song:%s\n",i,inet_ntoa(list_of_stations[i].multicast_address.sin_addr),Multicast_Port,list_of_stations[i].current_playing_song->song_filename);
 	}
 	return 0;
 }

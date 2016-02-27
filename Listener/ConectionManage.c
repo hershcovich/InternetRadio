@@ -59,7 +59,7 @@ int Play_MultiCast_Stream(char *IP_ADDR , char* IP_Port)
 	if(play){ // if the play application installed
 		while(1){
 			if((countbytes = recvfrom(sock,databuf,datalen,0,(struct sockaddr *)&multiaddr,(socklen_t *)&addrlen)) == -1){
-								perror("Bind problem");
+								perror("Recive problem");
 								close(sock);
 								if(play)pclose(play);
 								exit(EXIT_FAILURE);
@@ -70,7 +70,7 @@ int Play_MultiCast_Stream(char *IP_ADDR , char* IP_Port)
 	else{ //if play application not installed or -p flag exist
 		while(1){
 				if((countbytes = recvfrom(sock,databuf,datalen,0,(struct sockaddr *)&multiaddr,(socklen_t *)&addrlen)) == -1){
-					perror("Bind problem");
+					perror("Recive problem");
 					close(sock);
 					if(play)pclose(play);
 					exit(EXIT_FAILURE);

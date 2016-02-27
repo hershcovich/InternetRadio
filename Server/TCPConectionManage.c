@@ -17,6 +17,7 @@ void *tcp_radio_welcome(void* arg){
 	struct sockaddr_in listen_addr,newconnection;
 	welcomesocket = NULL; // a node to for the default welcome socket
 	tmpsocket  = NULL; //a socket for new conections
+	//socketlist = NULL;
 	listen_addr.sin_family = AF_INET;
 	listen_addr.sin_addr.s_addr=INADDR_ANY;
 	listen_addr.sin_port=htons(TCP_Port);
@@ -58,7 +59,10 @@ void *tcp_radio_welcome(void* arg){
 			exit(EXIT_FAILURE);
 		}
 		/* allocate new socketnode for thee new connection*/
-		tmpsocket = (socketnode*)malloc(sizeof(socketnode));
+		if(!(tmpsocket = (socketnode*)malloc(sizeof(socketnode)))){
+			perror("error malloc()");
+			exit(0);
+		}
 		/* add the new socket node to the list of sockets*/
 		tmpsocket->nextsocket=socketlist;
 		socketlist=tmpsocket;
@@ -85,14 +89,16 @@ void *tcp_radio_conection(void* arg){
 	printf("New client connection expecting hello\n");
 	if(0 >= (ans = hello_handshake(sonode))){ //enter client server handsake routine
 		close_socket_node(sonode); //in case of error or client close the connection
-		pthread_exit(NULL);
+		pthread_detach(pthread_self());
+		return 0;
 	}
 	while(1){ //interact with the client
 		if((ans = server_client_interaction(sonode))<=0){
 			if (ans == -1)
 				printf("Error..closing socket %d\n",sonode->sock);
 			close_socket_node(sonode); //in case of error or client close the connection
-			pthread_exit(NULL);
+			pthread_detach(pthread_self());
+			return 0;
 		}
 	}
 	return 0;
@@ -167,7 +173,10 @@ int hello_handshake(socketnode *sonode){
 				printf("error! Received an asksong message before hello! socket: %d client IP: %s\n",sonode->sock,inet_ntoa(sonode->address.sin_addr));
 				//create an invalid msg reply and send it to the client
 				invalid.replyType =2;
-				invalid.replyString = (char*)malloc(sizeof("Invalid Condition! server received asksong message before hello message!"));
+				if(!(invalid.replyString = (char*)malloc(sizeof("Invalid Condition! server received asksong message before hello message!")))){
+					perror("error malloc()");
+					exit(1);
+				}
 				strcpy(invalid.replyString,"Invalid Condition! server received asksong message before hello message!");
 				invalid.replatStringSize = strlen(invalid.replyString);
 				memcpy(&sendbuffer[0],&invalid.replyType,1);
@@ -175,6 +184,7 @@ int hello_handshake(socketnode *sonode){
 				strcpy(&sendbuffer[2], invalid.replyString);
 				send((sonode->sock),sendbuffer,invalid.replatStringSize + 2,0);
 				printf("error message sent to the client\n");
+				free(invalid.replyString);
 				return -1;
 			}
 			else
@@ -183,7 +193,10 @@ int hello_handshake(socketnode *sonode){
 				printf("Received an unknown message type from %s\n",inet_ntoa(sonode->address.sin_addr));
 				//create an invalid msg reply and send it to the client
 				invalid.replyType =2;
-				invalid.replyString = (char*)malloc(sizeof("Invalid Condition! server received unknown message type!"));
+				if(!(invalid.replyString = (char*)malloc(sizeof("Invalid Condition! server received unknown message type!")))){
+					perror("error malloc ()");
+					exit(1);
+				}
 				strcpy(invalid.replyString,"Invalid Condition! server received unknown message type!");
 				invalid.replatStringSize = strlen(invalid.replyString);
 				sendbuffer[0] = invalid.replyType;
@@ -191,6 +204,7 @@ int hello_handshake(socketnode *sonode){
 				strcpy(&sendbuffer[2], invalid.replyString);
 				send((sonode->sock),sendbuffer,invalid.replatStringSize + 2,0);
 				printf("error message sent to the client\n");
+				free(invalid.replyString);
 				return -1;
 			}
 			return 1;
@@ -270,7 +284,10 @@ int server_client_interaction(socketnode *sonode){
 				printf("Received an asksong with non-exisit station number %hu from %s\n",req_channel,inet_ntoa(sonode->address.sin_addr));
 				//set invalid message and send it to the client
 				invalid.replyType =2;
-				invalid.replyString = (char*)malloc(sizeof("Invalid Condition! Station  XXXXX doesn't exist!"));
+				if(!(invalid.replyString = (char*)malloc(sizeof("Invalid Condition! Station  XXXXX doesn't exist!")))){
+					perror("error malloc ()");
+					exit(1);
+				}
 				sprintf(invalid.replyString,"Invalid Condition! Station %hu doesn't exist!",req_channel);
 				invalid.replatStringSize = strlen(invalid.replyString);
 				sendbuffer[0] = invalid.replyType;
@@ -278,6 +295,7 @@ int server_client_interaction(socketnode *sonode){
 				strcpy(&sendbuffer[2], invalid.replyString);
 				send((sonode->sock),sendbuffer,invalid.replatStringSize + 2,0);
 				printf("error message sent to the client\n");
+				free(invalid.replyString);
 				return -1;
 			}
 		}
@@ -285,7 +303,10 @@ int server_client_interaction(socketnode *sonode){
 			printf("error! Received duplicate hello message socket: %d client IP: %s\n",sonode->sock,inet_ntoa(sonode->address.sin_addr));
 			//set invalid message and send it to the client
 			invalid.replyType =2;
-			invalid.replyString = (char*)malloc(sizeof("Invalid Condition! server received duplicate hello message!"));
+			if(!(invalid.replyString = (char*)malloc(sizeof("Invalid Condition! server received duplicate hello message!")))){
+				perror("error malloc ()");
+				exit(1);
+			}
 			strcpy(invalid.replyString,"Invalid Condition! server received duplicate hello message!");
 			invalid.replatStringSize = strlen(invalid.replyString);
 			sendbuffer[0] = invalid.replyType;
@@ -293,6 +314,7 @@ int server_client_interaction(socketnode *sonode){
 			strcpy(&sendbuffer[2], invalid.replyString);
 			send((sonode->sock),sendbuffer,invalid.replatStringSize + 2,0);
 			printf("error message sent to the client\n");
+			free(invalid.replyString);
 			return -1;
 		}
 		else
@@ -300,7 +322,10 @@ int server_client_interaction(socketnode *sonode){
 			printf("Received an unknown message type from %s\n",inet_ntoa(sonode->address.sin_addr));
 			//set invalid message and send it to the client
 			invalid.replyType =2;
-			invalid.replyString = (char*)malloc(sizeof("Invalid Condition! server received unknown message type!"));
+			if(!(invalid.replyString = (char*)malloc(sizeof("Invalid Condition! server received unknown message type!")))){
+				perror("error malloc ()");
+				exit(1);
+			}
 			strcpy(invalid.replyString,"Invalid Condition! server received unknown message type!");
 			invalid.replatStringSize = strlen(invalid.replyString);
 			sendbuffer[0] = invalid.replyType;
@@ -337,26 +362,29 @@ int close_TCP_server(){
 	socketnode* temp;
 	while(socketlist){ // release the clients socketnode list
 		pthread_cancel(socketlist->pth);
+		pthread_join(socketlist->pth,NULL);
 		close(socketlist->sock);
 		temp = socketlist;
 		socketlist =socketlist->nextsocket;
 		free(temp);
 	} //release tcp main thread
 	pthread_cancel(TCP_Default_Thread);
+	pthread_join(TCP_Default_Thread,NULL);
 	if(welcomesocket){
 		close(welcomesocket->sock);
 		free(welcomesocket);
 	} //release temp socket if in the middle of connecting to a new client
-	if(tmpsocket){
-		close(tmpsocket->sock);
-		free(tmpsocket);
-	}
+//	if(tmpsocket){
+//		close(tmpsocket->sock);
+//		free(tmpsocket);
+//	}
 	return 0;
 }
 
 int print_TCP_data(){
 	socketnode* to_print;
 	int client_number = 1;
+	printf("TCP server Listening on port: %d\n",TCP_Port);
 	printf(ANSI_COLOR_GREEN "Client List:\n" ANSI_COLOR_RESET);
 	to_print = socketlist;
 	if(!to_print)
